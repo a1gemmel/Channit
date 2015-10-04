@@ -12,7 +12,14 @@
   ],
   "background": {
      "scripts": ["background.js"]
-  }
+  },
+  "web_accessible_resources": [
+       "thread_template.ejs",
+	   "page_template.ejs",
+	   "post_template.ejs",
+	   "ejs/ejs_fulljslint.js",
+	   "head.ejs"
+     ]
 }
 
 

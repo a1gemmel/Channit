@@ -666,74 +666,87 @@ EJS.Helpers.prototype.img_tag = function (B, C, A) {
 }
 
 
+function makeHTTPS(link) {
+    return link.replace("http://", "https://");          // The function returns the product of p1 and p2
+}
 
-var post_template = '<div class="postContainer opContainer" id="pc883397"> \
-	<div id="p883397" class="post op"> \
-		<div class="postInfoM mobile" id="pim883397"> \
-			<span class="nameBlock"> \
-				<span class="name">Anonymous</span> \
-				<br> \
-				<span class="subject"><%= title %></span> \
-			</span> \
-			<span class="dateTime postNum" data-utc="1443894186">  \
-				10/03/15(Sat)13:43:06 <a href="thread/883397#p883397" title="Link to this post">No.</a> \
-				<a href="thread/883397#q883397" title="Reply to this post">883397</a> \
-			</span> \
-		</div> \
-		<div class="file" id="f883397"> \
-			<div class="fileText" id="fT883397"> \
-				File: <a title="2efd3caf65b02cd7_200266278-001.xlarger.jpg" href="//i.4cdn.org/diy/1443894186666.jpg" target="_blank">2efd3caf65b02cd7_20026627(...).jpg</a> (24 KB, 317x400) \
-			</div> \
-			<a class="fileThumb" href="//i.4cdn.org/diy/1443894186666.jpg" target="_blank"> \
-				<img src="//i.4cdn.org/diy/1443894186666s.jpg" alt="24 KB" data-md5="rcWPnxaqrnjbtKwYzwpXoQ==" style="height: 250px; width: 198px;"> \
-				<div data-tip data-tip-cb="mShowFull" class="mFileInfo mobile">24 KB JPG</div> \
-			</a> \
-		</div> \
-		<div class="postInfo desktop" id="pi883397"> \
-			<input type="checkbox" name="883397" value="delete"> \
-			<span class="subject">House Cleaning</span> \
-			<span class="nameBlock"> \
-				<span class="name">Anonymous</span> \
-			</span> \
-			<span class="dateTime" data-utc="1443894186">10/03/15(Sat)13:43:06</span> \
-			<span class="postNum desktop"> \
-				<a href="thread/883397#p883397" title="Link to this post">No.</a> \
-				<a href="thread/883397#q883397" title="Reply to this post">883397</a> &nbsp;  \
-				<span> \
-					<a href="thread/883397/house-cleaning" class="replylink">Reply</a> \
-				</span> \
-			</span> \
-		</div> \
-		<blockquote class="postMessage" id="m883397"> \
-			<%= text %> \
-		</blockquote> \
-	</div> \
-	<div class="postLink mobile"> \
-		<span class="info">25 Replies / 8 Images</span><a href="thread/883397" class="button">View Thread</a> \
-	</div> \
-</div>';
+function is_image_post(link) {
+return RegExp("(jpg|jpeg|bmp|gif|webm|png|gifv)$").exec(link);
+}
+
+function is_link_post(link) {
+	return !(is_image_post(link) || is_self_post(link));
+}
+
+function is_self_post(link) {
+	return RegExp("^\/r\/").exec(link);
+}
+
+function is_self_post_with_text(link) {
+	if (is_self_post(link)) {
+		return false; // fix this you slut
+	}
+	return false;
+}
+
+function is_self_post_without_text(link) {
+	if (is_self_post(link)) {
+		return true; // fix this you slut
+	}
+	return false;
+}
+
+function collectionToArray(collection){
+	var ary = [];
+	for(var i=0, len = collection.length; i < len; i++)
+	{
+		ary.push(collection[i]);
+	}
+	return ary;
+}
+
+content = collectionToArray(document.getElementsByClassName("entry")).slice(11);
 
 
+threads = [];
 
-
-
-
-content = document.getElementsByClassName("title");
-
-posts = []
+var thread_template = new EJS({url: chrome.extension.getURL('thread_template.ejs')});
+var page_template = new EJS({url: chrome.extension.getURL('page_template.ejs')});
+var post_template = new EJS({url: chrome.extension.getURL('post_template.ejs')});
+var head = new EJS({url: chrome.extension.getURL('head.ejs')});
 
 for (i = 0; i < content.length; i++) {
 	var el = content[i];
-	if (el.tagName == "A"){
-	    var post = {link : el.href, title : el.text, text : "SAMPLE TEXT PLZ IGNORE"};
-		posts.push(post);
-		console.log(post);
+	
+	var link_a = el.getElementsByClassName("title may-blank")[0];
+
+	var comment_a = el.getElementsByClassName("comments may-blank")[0];
+	
+	var post = { img_link : makeHTTPS(link_a.href), 
+				title :"",
+				text : link_a.text, 
+				comment_link : comment_a.href, 
+				comment_count : comment_a.text};
+		
+	if (is_image_post(post.img_link)){
+		// we cool
+	} else if (is_link_post(post.img_link)){
+		console.log("link post");
+		
+		post.text = post.text + "<br>" + post.img_link;
+		post.img_link = "https://static3.techinsider.io/image/55ba6d1f371d22dd2e8ba492-1106-1012/screen%20shot%202015-07-30%20at%202.31.57%20pm.png"; 
+
+	} else if (is_self_post(post.img_link)){
+		console.log("self post");
+		post.img_link = "https://static3.techinsider.io/image/55ba6d1f371d22dd2e8ba492-1106-1012/screen%20shot%202015-07-30%20at%202.31.57%20pm.png"; 
+		
 	}
+	
+	threads.push(thread_template.render(post));
+	//console.log(post);
+	
 }
 
-var post_template = new EJS({text:post_template});
-console.log(post_template);
-var first_post = post_template.render(posts[0]);
-console.log("This should be the first post:")
-console.log(first_post);
-document.body.innerHTML = first_post;
+var finished_page = page_template.render({threads: threads});
+document.body.innerHTML = finished_page;
+document.head.innerHTML = head.render({});
