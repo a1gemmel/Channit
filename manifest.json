@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+  "name": "Channit",
+  "version": "0.1",
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.reddit.com/*"
+      ],
+      "js": [ "content.js"]
+     }
+  ],
+  "background": {
+     "scripts": ["background.js"]
+  }
+}
+
+
