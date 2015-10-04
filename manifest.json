@@ -15,10 +15,12 @@
   },
   "web_accessible_resources": [
        "thread_template.ejs",
+	   "thread__with_comments_template.ejs",
 	   "page_template.ejs",
 	   "post_template.ejs",
 	   "ejs/ejs_fulljslint.js",
-	   "head.ejs"
+	   "head.ejs",
+	   "yotsubluenew.623.css"
      ]
 }
 

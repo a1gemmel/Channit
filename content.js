@@ -705,29 +705,26 @@ function collectionToArray(collection){
 	return ary;
 }
 
-content = collectionToArray(document.getElementsByClassName("entry")).slice(11);
-
-
-threads = [];
 
 var thread_template = new EJS({url: chrome.extension.getURL('thread_template.ejs')});
+var thread_with_comments_template = new EJS({url: chrome.extension.getURL('thread__with_comments_template.ejs')});
 var page_template = new EJS({url: chrome.extension.getURL('page_template.ejs')});
 var post_template = new EJS({url: chrome.extension.getURL('post_template.ejs')});
 var head = new EJS({url: chrome.extension.getURL('head.ejs')});
 
-for (i = 0; i < content.length; i++) {
-	var el = content[i];
-	
-	var link_a = el.getElementsByClassName("title may-blank")[0];
 
-	var comment_a = el.getElementsByClassName("comments may-blank")[0];
+function makeThreadOPHTML(el, finished_comments){
+	var link_a = el.getElementsByClassName("title may-blank")[0];
 	
-	var post = { img_link : makeHTTPS(link_a.href), 
-				title :"",
-				text : link_a.text, 
-				comment_link : comment_a.href, 
-				comment_count : comment_a.text};
+	var comment_a = el.getElementsByClassName("comments may-blank")[0];
 		
+	var post = { img_link : makeHTTPS(link_a.href), 
+					title :"",
+					text : link_a.text, 
+					comment_link : comment_a.href, 
+					comment_count : comment_a.text,
+					comments : finished_comments};
+			
 	if (is_image_post(post.img_link)){
 		// we cool
 	} else if (is_link_post(post.img_link)){
@@ -735,18 +732,48 @@ for (i = 0; i < content.length; i++) {
 		
 		post.text = post.text + "<br>" + post.img_link;
 		post.img_link = "https://static3.techinsider.io/image/55ba6d1f371d22dd2e8ba492-1106-1012/screen%20shot%202015-07-30%20at%202.31.57%20pm.png"; 
-
-	} else if (is_self_post(post.img_link)){
+			} else if (is_self_post(post.img_link)){
 		console.log("self post");
 		post.img_link = "https://static3.techinsider.io/image/55ba6d1f371d22dd2e8ba492-1106-1012/screen%20shot%202015-07-30%20at%202.31.57%20pm.png"; 
 		
 	}
 	
-	threads.push(thread_template.render(post));
-	//console.log(post);
+	return thread_with_comments_template.render(post);
+}
+
+
+
+
+function main_view() {
+
+	content = collectionToArray(document.getElementsByClassName("entry")).slice(11);
+	threads = [];
+	for (i = 0; i < content.length; i++) {
+		var el = content[i];
+		threads.push(makeThreadOPHTML(el, []));
+	}
+	var finished_page = page_template.render({threads: threads});
+	document.body.innerHTML = finished_page;
+	document.head.innerHTML = head.render({});
+}
+
+function thread_view() {
+	content = collectionToArray(document.getElementsByClassName("entry"))[0];
+	comments_in = collectionToArray(document.getElementsByClassName("md")).slice(1);
+	comments = [];
+	for (i = 0; i < comments_in.length; i++){
+		comments.push(post_template.render({text : comments_in[i].innerHTML}));
+	}
+	OP = makeThreadOPHTML(content, comments);
+	var finished_page = page_template.render({threads: [OP]});
+	document.body.innerHTML = finished_page;
+	document.head.innerHTML = head.render({});
 	
 }
 
-var finished_page = page_template.render({threads: threads});
-document.body.innerHTML = finished_page;
-document.head.innerHTML = head.render({});
+
+if (RegExp("/comments/").exec(document.URL)) {
+	thread_view();
+} else {
+	main_view();
+}
