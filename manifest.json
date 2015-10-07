@@ -10,8 +10,7 @@
       "js": [ "content.js"]
      }
   ],
-  "background": {
-     "scripts": ["background.js"]
+
   },
   "web_accessible_resources": [
        "thread_template.ejs",
